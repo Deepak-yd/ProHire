@@ -49,12 +49,24 @@ const PORT = process.env.PORT || 5000;
 async function start() {
   try {
     await sequelize.authenticate();
-    await sequelize.sync({ alter: true });
+    console.log("DB connected");
+
+    // 🔥 FIRST TIME: create tables forcefully
+    await sequelize.sync({ force: true });
+
+    console.log("Tables created");
+
+    // 🔥 THEN seed
     await seedIfEmpty();
-    console.log('Database connected.');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+    console.log("Seed complete");
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+
   } catch (err) {
-    console.error('Failed to start server:', err);
+    console.error("Failed to start server:", err);
   }
 }
 
