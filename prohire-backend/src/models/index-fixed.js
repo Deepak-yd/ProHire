@@ -1,16 +1,30 @@
 const { Sequelize } = require('sequelize');
-const path = require('path');
 
 let sequelize;
 
-// Force SQLite for quick start (no MySQL setup needed)
-const storage = path.join(__dirname, '..', '..', 'database.sqlite');
-sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage,
-  logging: false,
-});
+// ✅ Use PostgreSQL in production (Render)
+if (process.env.DB_URL) {
+  sequelize = new Sequelize(process.env.DB_URL, {
+    dialect: 'postgres',
+    protocol: 'postgres',
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false, // required for Neon/Render
+      },
+    },
+  });
+} else {
+  // ✅ fallback for local (optional)
+  sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './database.sqlite',
+    logging: false,
+  });
+}
 
+// ✅ LOAD MODELS
 const User = require('./user')(sequelize);
 const Professional = require('./professional')(sequelize);
 const Hire = require('./hire')(sequelize);
@@ -20,7 +34,7 @@ const Setting = require('./setting')(sequelize);
 const Connection = require('./connection')(sequelize);
 const Job = require('./job')(sequelize);
 
-// Associations (same as original)
+// ✅ ASSOCIATIONS
 User.hasMany(Hire, { foreignKey: 'clientId', as: 'hiresMade' });
 Professional.hasMany(Hire, { foreignKey: 'professionalId', as: 'jobs' });
 Hire.belongsTo(User, { foreignKey: 'clientId', as: 'client' });
