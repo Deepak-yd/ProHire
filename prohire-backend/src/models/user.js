@@ -81,10 +81,12 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       defaultValue: '',
     },
+  }, {
+    tableName: 'Users',        // ✅ IMPORTANT
+    freezeTableName: true      // ✅ IMPORTANT
   });
 
   User.beforeSave(async (user) => {
-    // auto-generate username from name if not provided and name is available
     if (!user.username && user.name) {
       let base = user.name.toLowerCase().replace(/\s+/g, '');
       let attempt = base;
@@ -94,8 +96,8 @@ module.exports = (sequelize) => {
       }
       user.username = attempt;
     }
-    if (user.changed && !user.changed('password')) return;
-    if (user.changed && user.changed('password')) {
+
+    if (user.changed('password')) {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(user.password, salt);
     }
@@ -106,7 +108,7 @@ module.exports = (sequelize) => {
   };
 
   User.prototype.toJSON = function () {
-    const values = Object.assign({}, this.get());
+    const values = { ...this.get() };
     delete values.password;
     return values;
   };
