@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize) => {
-  const User = sequelize.define('users', {
+  const User = sequelize.define('User', {   // ✅ FIX: model name singular
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
@@ -82,18 +82,22 @@ module.exports = (sequelize) => {
       defaultValue: '',
     },
   }, {
-    tableName: 'Users',        // ✅ IMPORTANT
-    freezeTableName: true      // ✅ IMPORTANT
+    tableName: 'users',        // ✅ FIX: lowercase
+    freezeTableName: true,     // ✅ prevent Sequelize changes
+    timestamps: true
   });
 
+  // 🔐 Hooks
   User.beforeSave(async (user) => {
     if (!user.username && user.name) {
       let base = user.name.toLowerCase().replace(/\s+/g, '');
       let attempt = base;
       let count = 1;
+
       while (await User.findOne({ where: { username: attempt } })) {
         attempt = `${base}${count++}`;
       }
+
       user.username = attempt;
     }
 
@@ -103,6 +107,7 @@ module.exports = (sequelize) => {
     }
   });
 
+  // 🔐 Methods
   User.prototype.validatePassword = function (password) {
     return bcrypt.compare(password, this.password);
   };
