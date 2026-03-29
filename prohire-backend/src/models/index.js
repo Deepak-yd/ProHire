@@ -1,15 +1,21 @@
 const { Sequelize } = require('sequelize');
-const path = require('path');
 
 let sequelize;
-// Force SQLite for quick start (no MySQL setup needed)
-const storage = path.join(__dirname, '..', '..', 'database.sqlite');
-sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage,
-  logging: false
+
+// ✅ PostgreSQL (Neon)
+sequelize = new Sequelize(process.env.DB_URL, {
+  dialect: 'postgres',
+  protocol: 'postgres',
+  logging: false,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
 });
 
+// Models
 const User = require('./user')(sequelize);
 const Professional = require('./professional')(sequelize);
 const Hire = require('./hire')(sequelize);
@@ -19,6 +25,7 @@ const Setting = require('./setting')(sequelize);
 const Connection = require('./connection')(sequelize);
 const Job = require('./job')(sequelize);
 
+// Relationships
 User.hasMany(Hire, { foreignKey: 'clientId', as: 'hiresMade' });
 Professional.hasMany(Hire, { foreignKey: 'professionalId', as: 'jobs' });
 Hire.belongsTo(User, { foreignKey: 'clientId', as: 'client' });
@@ -30,13 +37,13 @@ Professional.belongsTo(Category, { foreignKey: 'categoryId', as: 'categoryObj' }
 Professional.hasMany(Service, { foreignKey: 'professionalId', as: 'services' });
 Service.belongsTo(Professional, { foreignKey: 'professionalId', as: 'professional' });
 
-// connections between users (friend requests / contacts)
+// connections
 User.hasMany(Connection, { foreignKey: 'requesterId', as: 'sentRequests' });
 User.hasMany(Connection, { foreignKey: 'receiverId', as: 'receivedRequests' });
 Connection.belongsTo(User, { foreignKey: 'requesterId', as: 'requester' });
 Connection.belongsTo(User, { foreignKey: 'receiverId', as: 'receiver' });
 
-// Jobs posted by professionals
+// Jobs
 Professional.hasMany(Job, { foreignKey: 'professionalId', as: 'postedJobs' });
 Job.belongsTo(Professional, { foreignKey: 'professionalId', as: 'professional' });
 
