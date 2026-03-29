@@ -51,15 +51,16 @@ async function start() {
     await sequelize.authenticate();
     console.log("DB connected");
 
-    // 🔥 FIRST TIME: create tables forcefully
-    await sequelize.sync({ force: true });
+    // ✅ SAFE SYNC (no data loss)
+    await sequelize.sync({ alter: true });
 
-    console.log("Tables created");
+    console.log("Tables ready");
 
-    // 🔥 THEN seed
     await seedIfEmpty();
 
     console.log("Seed complete");
+
+    const PORT = process.env.PORT || 5000;
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
@@ -69,5 +70,7 @@ async function start() {
     console.error("Failed to start server:", err);
   }
 }
+
+start();
 
 start();
